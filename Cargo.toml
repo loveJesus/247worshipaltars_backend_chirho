@@ -1,0 +1,27 @@
+[package]
+name = "worship_coordinator_chirho"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = { version = "0.7", features = ["macros"] }
+axum-extra = { version = "0.9", features = ["cookie"] }
+tokio = { version = "1.36", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "mysql", "chrono", "uuid"] }
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.0", features = ["v4", "serde"] }
+tower-http = { version = "0.5", features = ["cors"] }
+tower = "0.4"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+bcrypt = "0.15"
+jsonwebtoken = "9.2"
+tower-cookies = "0.8"
+cookie = "0.18"
+rand = "0.8"
+async-trait = "0.1"
+thiserror = "1.0"
+anyhow = "1.0"
+dotenv = "0.15"
