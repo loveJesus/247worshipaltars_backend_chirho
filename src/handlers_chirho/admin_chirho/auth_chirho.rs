@@ -18,9 +18,8 @@ use sqlx::{MySql, Pool};
 pub async fn login_chirho(
     State(pool_chirho): State<Pool<MySql>>,
     State(config_chirho): State<ConfigChirho>,
-    jar_chirho: CookieJar,
     Json(login_chirho): Json<AdminLoginRequestChirho>,
-) -> Result<(CookieJar, Json<AdminLoginResponseChirho>), AppErrorChirho> {
+) -> Result<Json<AdminLoginResponseChirho>, AppErrorChirho> {
     let admin_chirho = sqlx::query_as!(
         crate::models_chirho::application_administrator_chirho::ApplicationAdministratorChirho,
         r#"
@@ -34,8 +33,10 @@ pub async fn login_chirho(
     .await?;
 
     if !verify(&login_chirho.password_chirho, &admin_chirho.password_representation_chirho)? {
+        println!("Invalid password Aleluya");
         return Err(AppErrorChirho::Validation("Invalid credentials".to_string()));
     }
+    println!("Admin chirho password representation chirho");
 
     let token_chirho = create_token_chirho(
         admin_chirho.admin_id_chirho.to_string(),
@@ -43,15 +44,7 @@ pub async fn login_chirho(
         &config_chirho,
     )?;
 
-    let cookie_chirho = Cookie::build(("auth_token_chirho", token_chirho.clone()))
-        .path("/")
-        .http_only(true)
-        .build();
-
-    Ok((
-        jar_chirho.add(cookie_chirho),
-        Json(AdminLoginResponseChirho { token_chirho: token_chirho }),
-    ))
+    Ok(Json(AdminLoginResponseChirho { token_chirho: token_chirho }))
 }
 
 pub async fn logout_chirho(jar_chirho: CookieJar) -> impl IntoResponse {

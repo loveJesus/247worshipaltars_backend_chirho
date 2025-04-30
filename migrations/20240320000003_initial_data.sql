@@ -35,7 +35,7 @@ INSERT INTO application_administrators_chirho (
     password_representation_chirho
 )
 VALUES 
-    ('00000000-0000-0000-0000-000000000201', 'admin', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewKy7P2p2K7Wgq0G');
+    ('00000000-0000-0000-0000-000000000201', 'admin', '$2y$10$8TWgvOYV8hdych.JOSXFBe4IByGe6oRB2/IxaBfbqoU.V0UfF82qK');
 
 -- Insert sample scheduled worship days
 INSERT INTO scheduled_worship_days_chirho (

@@ -1,5 +1,7 @@
 // For God so loved the world, that He gave His only begotten Son, that all who believe in Him should not perish but have everlasting life.
 pub use tokio::net::TcpListener;
+use tower_http::cors::{AllowMethods, AllowOrigin};
+
 // <-- Import TcpListener from Tokio
 
 use axum::{
@@ -8,6 +10,7 @@ use axum::{
 };
 use dotenv::dotenv;
 use std::net::SocketAddr;
+use axum::http::{header, Method};
 use tower_http::cors::{Any, CorsLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -76,13 +79,27 @@ async fn main() {
 
     // Set up CORS
     let cors_chirho = CorsLayer::new()
-        .allow_origin(Any)
-        .allow_methods(Any)
-        .allow_headers(Any);
+        .allow_origin(AllowOrigin::list(vec![
+            "http://localhost:5173".parse().unwrap(),
+            "http://example.com".parse().unwrap(),
+        ]))
+        .allow_methods(AllowMethods::list(vec![
+            Method::GET,
+            Method::POST,
+            Method::PUT,
+            Method::DELETE,
+        ]))
+        .allow_headers(vec![
+            header::CONTENT_TYPE,
+            header::AUTHORIZATION,
+            header::ACCEPT,
+        ])
+        .allow_credentials(true);
 
     // Create router
     let app_chirho = Router::new()
         // Admin routes
+        .route("/api_chirho/admin_chirho/auth_chirho/login_chirho", post(login_chirho))
         .route("/api_chirho/admin_chirho/continents_chirho", get(get_continents_chirho))
         .route("/api_chirho/admin_chirho/continents_chirho/:id", get(get_continent_chirho))
         .route("/api_chirho/admin_chirho/continents_chirho", post(create_continent_chirho))
@@ -97,8 +114,7 @@ async fn main() {
         .route("/api_chirho/admin_chirho/schedule_chirho/assign_chirho", post(create_schedule_chirho))
         .route("/api_chirho/admin_chirho/schedule_chirho/unassign_chirho", delete(delete_schedule_chirho))
         // Auth routes
-        .route("/api_chirho/admin_chirho/session_chirho", post(login_chirho))
-        .route("/api_chirho/admin_chirho/session_chirho", delete(logout_chirho))
+        .route("/api_chirho/admin_chirho/auth_chirho/logout_chirho", delete(logout_chirho))
         // Public routes
         .route("/api_chirho/public_chirho/church_chirho/:token_chirho/schedule_chirho/:date_chirho", get(get_public_schedules_chirho))
         .route("/api_chirho/public_chirho/church_chirho/:token_chirho/signup_chirho", post(create_signup_chirho))

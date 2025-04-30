@@ -65,10 +65,12 @@ pub async fn create_continent_chirho(
 }
 
 pub async fn get_continents_chirho(
-    State(pool): State<Pool<MySql>>,
-    _auth_chirho: AuthStateChirho,
+    State(pool_chirho): State<Pool<MySql>>,
+    auth_chirho: AuthStateChirho,
 ) -> Result<Json<Vec<ContinentChirho>>, AppErrorChirho> {
-    let continents = sqlx::query_as!(
+    println!("Continents handler: Starting with auth claims: {:?}", auth_chirho.claims_chirho);
+    
+    let continents_chirho = sqlx::query_as!(
         ContinentChirho,
         r#"
         SELECT 
@@ -81,10 +83,15 @@ pub async fn get_continents_chirho(
         ORDER BY name_chirho
         "#
     )
-    .fetch_all(&pool)
-    .await?;
+    .fetch_all(&pool_chirho)
+    .await
+    .map_err(|e| {
+        println!("Continents handler: Database error: {:?}", e);
+        AppErrorChirho::Database(e)
+    })?;
 
-    Ok(Json(continents))
+    println!("Continents handler: Successfully retrieved {} continents", continents_chirho.len());
+    Ok(Json(continents_chirho))
 }
 
 pub async fn get_continent_chirho(
