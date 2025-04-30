@@ -107,7 +107,7 @@ async fn main() {
         .route("/api_chirho/admin_chirho/continents_chirho/:id", delete(delete_continent_chirho))
         .route("/api_chirho/admin_chirho/churches_chirho", get(get_churches_chirho))
         .route("/api_chirho/admin_chirho/churches_chirho/:id", get(get_church_chirho))
-        //.route("/api_chirho/admin_chirho/churches_chirho", post(create_church_chirho))
+        .route("/api_chirho/admin_chirho/churches_chirho", post(create_church_chirho))
         .route("/api_chirho/admin_chirho/churches_chirho/:id", put(update_church_chirho))
         .route("/api_chirho/admin_chirho/churches_chirho/:id", delete(delete_church_chirho))
         .route("/api_chirho/admin_chirho/schedule_chirho", get(get_schedules_chirho))

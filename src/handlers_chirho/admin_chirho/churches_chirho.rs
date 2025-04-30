@@ -9,10 +9,11 @@ use axum::{
     Json,
 };
 use chrono::Utc;
-use rand::Rng;
+use rand::{Rng, rngs::OsRng};
 use sqlx::{MySql, Pool};
 use uuid::Uuid;
 
+#[axum::debug_handler]
 pub async fn create_church_chirho(
     State(pool_chirho): State<Pool<MySql>>,
     _auth_chirho: AuthStateChirho,
@@ -21,10 +22,9 @@ pub async fn create_church_chirho(
     let church_id_chirho = Uuid::new_v4().to_string();
     let now_chirho = Utc::now();
     
-    // Generate a random access token
-    let mut rng_chirho = rand::thread_rng();
+    // Generate a random access token using OsRng
     let token_chirho: String = (0..32)
-        .map(|_| rng_chirho.sample(rand::distributions::Alphanumeric) as char)
+        .map(|_| OsRng.sample(rand::distributions::Alphanumeric) as char)
         .collect();
 
     // First insert the church
