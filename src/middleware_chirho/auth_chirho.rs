@@ -23,7 +23,7 @@ pub struct AuthStateChirho {
     pub claims_chirho: ClaimsChirho,
 }
 
-#[async_trait::async_trait]
+//#[async_trait::async_trait]
 impl<S> FromRequestParts<S> for AuthStateChirho
 where
     S: Send + Sync,

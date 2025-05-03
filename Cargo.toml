@@ -21,7 +21,7 @@ bcrypt = "~0.17"
 jsonwebtoken = "~9.3"
 
 rand = "~0.9"
-async-trait = "~0.1"
+# async-trait = "~0.1"
 thiserror = "~2.0"
 
 dotenv = "~0.15"

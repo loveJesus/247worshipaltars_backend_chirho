@@ -82,8 +82,8 @@ async fn main() {
     // Set up CORS
     let cors_chirho = CorsLayer::new()
         .allow_origin(AllowOrigin::list(vec![
-            "http://localhost:5173".parse().unwrap(),
-            "http://127.0.0.1:5173".parse().unwrap(),
+            "http://localhost:5174".parse().unwrap(),
+            "http://127.0.0.1:5174".parse().unwrap(),
         ]))
         .allow_methods(AllowMethods::list(vec![
             Method::GET,
@@ -112,38 +112,37 @@ async fn main() {
         .route("/api_chirho/admin_chirho/auth_chirho/login_chirho", post(login_chirho))
         .route("/api_chirho/admin_chirho/auth_chirho/logout_chirho", post(logout_chirho))
         .route("/api_chirho/admin_chirho/continents_chirho", get(get_continents_chirho))
-        .route("/api_chirho/admin_chirho/continents_chirho/:id", get(get_continent_chirho))
+        .route("/api_chirho/admin_chirho/continents_chirho/{id}", get(get_continent_chirho))
         .route("/api_chirho/admin_chirho/continents_chirho", post(create_continent_chirho))
-        .route("/api_chirho/admin_chirho/continents_chirho/:id", put(update_continent_chirho))
-        .route("/api_chirho/admin_chirho/continents_chirho/:id", delete(delete_continent_chirho))
+        .route("/api_chirho/admin_chirho/continents_chirho/{id}", put(update_continent_chirho))
+        .route("/api_chirho/admin_chirho/continents_chirho/{id}", delete(delete_continent_chirho))
         .route("/api_chirho/admin_chirho/churches_chirho", get(get_churches_chirho))
-        .route("/api_chirho/admin_chirho/churches_chirho/:id", get(get_church_chirho))
+        .route("/api_chirho/admin_chirho/churches_chirho/{id}", get(get_church_chirho))
         .route("/api_chirho/admin_chirho/churches_chirho", post(create_church_chirho))
-        .route("/api_chirho/admin_chirho/churches_chirho/:id", put(update_church_chirho))
-        .route("/api_chirho/admin_chirho/churches_chirho/:id", delete(delete_church_chirho))
+        .route("/api_chirho/admin_chirho/churches_chirho/{id}", put(update_church_chirho))
+        .route("/api_chirho/admin_chirho/churches_chirho/{id}", delete(delete_church_chirho))
         .route("/api_chirho/admin_chirho/schedule_chirho", get(get_schedules_chirho))
         .route("/api_chirho/admin_chirho/schedule_chirho/assign_chirho", post(create_schedule_chirho))
         .route("/api_chirho/admin_chirho/schedule_chirho/unassign_chirho", delete(delete_schedule_chirho))
         // Auth routes
-        .route("/api_chirho/admin_chirho/auth_chirho/logout_chirho", delete(logout_chirho))
-        .layer(cors_chirho)
-        .layer(Extension(pool_chirho));
+        .route("/api_chirho/admin_chirho/auth_chirho/logout_chirho", delete(logout_chirho));        
 
     // Public routes
-    // let public_router_chirho = Router::new()
-    //     .route("/api_chirho/public_chirho/church_chirho/:token_chirho", get(get_church_by_token_chirho))
-    //     .layer(cors_chirho);
+    let public_router_chirho = Router::new()
+        .route("/api_chirho/public_chirho/church_chirho/{token_chirho}", get(get_church_by_token_chirho));
+        
 
     // Combine all routers
-    // let app_chirho = Router::new()
-    //     .merge(admin_router_chirho)
-    //     .merge(public_router_chirho)
-    //     .layer(Extension(pool_chirho));
+    let app_chirho = Router::new()
+        .merge(admin_router_chirho)
+        .merge(public_router_chirho)
+        .layer(cors_chirho)
+        .with_state(pool_chirho);
 
     // Start server
     let addr_chirho = SocketAddr::from(([0, 0, 0, 0], 3000));
     let listener_chirho = TcpListener::bind(addr_chirho).await.unwrap();
 
     println!("Server listening on {}", addr_chirho);
-    axum::serve(listener_chirho, admin_router_chirho).await.unwrap();
+    axum::serve(listener_chirho, app_chirho).await.unwrap();
 }
