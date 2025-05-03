@@ -12,9 +12,9 @@ use sqlx::{MySql, Pool};
 
 pub async fn get_church_by_token_chirho(
     State(pool_chirho): State<Pool<MySql>>,
-    Path(token_chirho): Path<String>,
+    Path(church_token_chirho): Path<String>,
 ) -> Result<Json<ChurchChirho>, AppErrorChirho> {
-    println!("get_church_by_token_chirho: token_chirho: {}", token_chirho);
+    println!("get_church_by_token_chirho: token_chirho: {}", church_token_chirho);
     let church_chirho = sqlx::query_as!(
         ChurchChirho,
         r#"
@@ -33,7 +33,7 @@ pub async fn get_church_by_token_chirho(
         FROM churches_chirho
         WHERE member_access_token_chirho = ?
         "#,
-        token_chirho
+        church_token_chirho
     )
     .fetch_optional(&pool_chirho)
     .await?;

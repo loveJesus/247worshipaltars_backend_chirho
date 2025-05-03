@@ -45,19 +45,19 @@ use handlers_chirho::{
             update_continent_chirho,
         },
         schedules_chirho::{
-            create_schedule_chirho
-            ,
-            delete_schedule_chirho
-            ,
+            create_schedule_chirho,
+            delete_schedule_chirho,
             get_schedules_chirho,
         },
     },
     public_chirho::{
         //create_signup_chirho,
         get_public_schedules_chirho,
+        get_upcoming_schedules_chirho,
         get_church_by_token_chirho,
     },
 };
+use crate::handlers_chirho::public_chirho::create_signup_chirho;
 
 #[tokio::main]
 async fn main() {
@@ -131,8 +131,10 @@ async fn main() {
 
     // Public routes
     let public_router_chirho = Router::new()
-        .route("/api_chirho/public_chirho/church_chirho/{token_chirho}", get(get_church_by_token_chirho));
-        
+        .route("/api_chirho/public_chirho/church_chirho/{church_token_chirho}", get(get_church_by_token_chirho))
+        .route("/api_chirho/public_chirho/church_chirho/{church_token_chirho}/assign_to_schedule_chirho/{schedule_id_chirho}", post(create_signup_chirho))
+        .route("/api_chirho/public_chirho/schedules_chirho/upcoming_chirho", get(get_upcoming_schedules_chirho));
+
 
     // Combine all routers
     let app_chirho = Router::new()

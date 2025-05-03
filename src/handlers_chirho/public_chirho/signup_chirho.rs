@@ -12,12 +12,15 @@ use axum::{
     Json,
 };
 use sqlx::{MySqlPool, Row};
+use uuid;
+use chrono;
 
 pub async fn create_signup_chirho(
     State(pool_chirho): State<MySqlPool>,
-    Path(token_chirho): Path<String>,
+    Path((church_token_chirho, schedule_id_chirho)): Path<(String, String)>,
     Json(signup_chirho): Json<CreateHourlySignupChirho>,
 ) -> Result<Json<HourlySignupChirho>, AppErrorChirho> {
+    println!("HALLELUJAH {:?}", signup_chirho);
     // First verify the church exists and get its ID
     let church_chirho = sqlx::query_as!(
         ChurchChirho,
@@ -28,6 +31,8 @@ pub async fn create_signup_chirho(
             continent_id_chirho,
             church_timezone_chirho,
             admin_details_note_chirho,
+            leader_name_chirho,
+            leader_email_chirho,
             internal_notes_chirho,
             member_access_token_chirho,
             created_timestamp_chirho,
@@ -35,7 +40,7 @@ pub async fn create_signup_chirho(
         FROM churches_chirho
         WHERE member_access_token_chirho = ?
         "#,
-        token_chirho
+        church_token_chirho
     )
     .fetch_optional(&pool_chirho)
     .await?
@@ -54,7 +59,7 @@ pub async fn create_signup_chirho(
         FROM scheduled_worship_days_chirho
         WHERE schedule_id_chirho = ? AND church_id_chirho = ?
         "#,
-        signup_chirho.schedule_id_chirho,
+        schedule_id_chirho,
         church_chirho.church_id_chirho
     )
     .fetch_optional(&pool_chirho)
@@ -62,36 +67,46 @@ pub async fn create_signup_chirho(
     .ok_or_else(|| AppErrorChirho::NotFound("Schedule not found".to_string()))?;
 
     // Create the signup
-    let mysql_row_signup_chirho  = sqlx::query_as!(
-        HourlySignupChirho,
+    let signup_id_chirho = uuid::Uuid::new_v4().to_string();
+    let now_chirho = chrono::Utc::now();
+
+    sqlx::query!(
         r#"
         INSERT INTO hourly_signups_chirho (
-            schedule_id_chirho,
-            slot_hour_chirho,
-            participant_name_chirho
-        )
-        VALUES (?, ?, ?)
-        RETURNING
             signup_id_chirho,
             schedule_id_chirho,
             slot_hour_chirho,
             participant_name_chirho,
             signup_timestamp_chirho
+        )
+        VALUES (?, ?, ?, ?, ?)
         "#,
-        signup_chirho.schedule_id_chirho,
+        signup_id_chirho,
+        schedule_id_chirho,
         signup_chirho.slot_hour_chirho,
-        signup_chirho.participant_name_chirho
+        signup_chirho.participant_name_chirho,
+        now_chirho
+    )
+    .execute(&pool_chirho)
+    .await?;
+
+    // Fetch the created signup
+    let hourly_signup_chirho = sqlx::query_as!(
+        HourlySignupChirho,
+        r#"
+        SELECT 
+            signup_id_chirho,
+            schedule_id_chirho,
+            slot_hour_chirho,
+            participant_name_chirho,
+            signup_timestamp_chirho
+        FROM hourly_signups_chirho
+        WHERE signup_id_chirho = ?
+        "#,
+        signup_id_chirho
     )
     .fetch_one(&pool_chirho)
     .await?;
-    // convert mysql row to HourlySignupChirho
-    let hourly_signup_chirho  = HourlySignupChirho {
-        signup_id_chirho: mysql_row_signup_chirho.try_get("signup_id_chirho")?,
-        schedule_id_chirho: mysql_row_signup_chirho.try_get("schedule_id_chirho")?,
-        slot_hour_chirho: mysql_row_signup_chirho.try_get("slot_hour_chirho")?,
-        participant_name_chirho: mysql_row_signup_chirho.try_get("participant_name_chirho")?,
-        signup_timestamp_chirho: mysql_row_signup_chirho.try_get("signup_timestamp_chirho")?,
-    };
 
     Ok(Json(hourly_signup_chirho))
 } 
