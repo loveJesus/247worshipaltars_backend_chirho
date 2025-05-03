@@ -11,6 +11,7 @@ use axum::{
 use chrono::Utc;
 use sqlx::{MySql, Pool};
 use uuid::Uuid;
+use serde::{Serialize, Deserialize};
 
 pub async fn get_schedules_chirho(
     State(pool_chirho): State<Pool<MySql>>,
@@ -68,6 +69,7 @@ pub async fn create_schedule_chirho(
     _auth_chirho: AuthStateChirho,
     Json(schedule_chirho): Json<CreateScheduleChirho>,
 ) -> Result<Json<ScheduleChirho>, AppErrorChirho> {
+    println!("HALLELUJAH CREATE SCHEDULE");
     let schedule_id_chirho = Uuid::new_v4().to_string();
     let now_chirho = Utc::now();
 
@@ -186,12 +188,17 @@ pub async fn delete_schedule_chirho(
     Ok(())
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AssignScheduleRequestChirho {
+    pub church_id_chirho: String,
+    pub worship_date_chirho: chrono::NaiveDate,
+}
+
 pub async fn assign_schedule_chirho(
     State(pool_chirho): State<Pool<MySql>>,
     auth_chirho: AuthStateChirho,
-    Json(assignment_chirho): Json<(String, chrono::NaiveDate)>,
+    Json(assignment_chirho): Json<AssignScheduleRequestChirho>,
 ) -> Result<Json<ScheduleChirho>, AppErrorChirho> {
-    let (church_id_chirho, worship_date_chirho) = assignment_chirho;
     let schedule_id_chirho = Uuid::new_v4().to_string();
     let now_chirho = Utc::now();
 
@@ -208,8 +215,8 @@ pub async fn assign_schedule_chirho(
         VALUES (?, ?, ?, ?, ?)
         "#,
         schedule_id_chirho,
-        church_id_chirho,
-        worship_date_chirho,
+        assignment_chirho.church_id_chirho,
+        assignment_chirho.worship_date_chirho,
         auth_chirho.claims_chirho.sub_chirho,
         now_chirho
     )

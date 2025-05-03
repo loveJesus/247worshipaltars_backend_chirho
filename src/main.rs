@@ -84,6 +84,8 @@ async fn main() {
         .allow_origin(AllowOrigin::list(vec![
             "http://localhost:5174".parse().unwrap(),
             "http://127.0.0.1:5174".parse().unwrap(),
+            "http://localhost:5173".parse().unwrap(),
+            "http://127.0.0.1:5173".parse().unwrap(),
         ]))
         .allow_methods(AllowMethods::list(vec![
             Method::GET,
@@ -112,18 +114,18 @@ async fn main() {
         .route("/api_chirho/admin_chirho/auth_chirho/login_chirho", post(login_chirho))
         .route("/api_chirho/admin_chirho/auth_chirho/logout_chirho", post(logout_chirho))
         .route("/api_chirho/admin_chirho/continents_chirho", get(get_continents_chirho))
-        .route("/api_chirho/admin_chirho/continents_chirho/{id}", get(get_continent_chirho))
+        .route("/api_chirho/admin_chirho/continents_chirho/{id_chirho}", get(get_continent_chirho))
         .route("/api_chirho/admin_chirho/continents_chirho", post(create_continent_chirho))
-        .route("/api_chirho/admin_chirho/continents_chirho/{id}", put(update_continent_chirho))
-        .route("/api_chirho/admin_chirho/continents_chirho/{id}", delete(delete_continent_chirho))
+        .route("/api_chirho/admin_chirho/continents_chirho/{id_chirho}", put(update_continent_chirho))
+        .route("/api_chirho/admin_chirho/continents_chirho/{id_chirho}", delete(delete_continent_chirho))
         .route("/api_chirho/admin_chirho/churches_chirho", get(get_churches_chirho))
-        .route("/api_chirho/admin_chirho/churches_chirho/{id}", get(get_church_chirho))
+        .route("/api_chirho/admin_chirho/churches_chirho/{id_chirho}", get(get_church_chirho))
         .route("/api_chirho/admin_chirho/churches_chirho", post(create_church_chirho))
-        .route("/api_chirho/admin_chirho/churches_chirho/{id}", put(update_church_chirho))
-        .route("/api_chirho/admin_chirho/churches_chirho/{id}", delete(delete_church_chirho))
+        .route("/api_chirho/admin_chirho/churches_chirho/{id_chirho}", put(update_church_chirho))
+        .route("/api_chirho/admin_chirho/churches_chirho/{id_chirho}", delete(delete_church_chirho))
         .route("/api_chirho/admin_chirho/schedule_chirho", get(get_schedules_chirho))
         .route("/api_chirho/admin_chirho/schedule_chirho/assign_chirho", post(create_schedule_chirho))
-        .route("/api_chirho/admin_chirho/schedule_chirho/unassign_chirho", delete(delete_schedule_chirho))
+        .route("/api_chirho/admin_chirho/schedule_chirho/unassign_chirho/{schedule_id_chirho}", delete(delete_schedule_chirho))
         // Auth routes
         .route("/api_chirho/admin_chirho/auth_chirho/logout_chirho", delete(logout_chirho));        
 

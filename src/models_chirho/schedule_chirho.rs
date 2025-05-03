@@ -15,7 +15,7 @@ pub struct ScheduleChirho {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateScheduleChirho {
     pub church_id_chirho: String,
-    pub worship_date_chirho: DateTime<Utc>,
+    pub worship_date_chirho: NaiveDate,
     pub assigned_by_admin_id_chirho: String,
 }
 
