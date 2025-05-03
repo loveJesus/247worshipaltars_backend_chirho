@@ -1,20 +1,17 @@
-use crate::{
-    error_chirho::AppErrorChirho,
-    middleware_chirho::AuthStateChirho,
-    models_chirho::schedule_chirho::{CreateScheduleChirho, ScheduleChirho, UpdateScheduleChirho},
-};
+use std::sync::Arc;
+use crate::{error_chirho::AppErrorChirho, middleware_chirho::AuthStateChirho, models_chirho::schedule_chirho::{CreateScheduleChirho, ScheduleChirho, UpdateScheduleChirho}, AppStateChirho};
 // For God so loved the world, that He gave His only begotten Son, that all who believe in Him should not perish but have everlasting life.
 use axum::{
     extract::{Path, State},
     Json,
 };
 use chrono::Utc;
-use sqlx::{MySql, Pool};
+use sqlx::{MySql, MySqlPool, Pool};
 use uuid::Uuid;
 use serde::{Serialize, Deserialize};
 
 pub async fn get_schedules_chirho(
-    State(pool_chirho): State<Pool<MySql>>,
+    State((pool_chirho, _)): State<(MySqlPool, Arc<AppStateChirho>)>,
     _auth_chirho: AuthStateChirho,
 ) -> Result<Json<Vec<ScheduleChirho>>, AppErrorChirho> {
     let schedules_chirho = sqlx::query_as!(
@@ -65,7 +62,7 @@ pub async fn get_schedule_chirho(
 }
 
 pub async fn create_schedule_chirho(
-    State(pool_chirho): State<Pool<MySql>>,
+    State((pool_chirho, _)): State<(MySqlPool, Arc<AppStateChirho>)>,
     _auth_chirho: AuthStateChirho,
     Json(schedule_chirho): Json<CreateScheduleChirho>,
 ) -> Result<Json<ScheduleChirho>, AppErrorChirho> {
@@ -167,7 +164,7 @@ pub async fn update_schedule_chirho(
 }
 
 pub async fn delete_schedule_chirho(
-    State(pool_chirho): State<Pool<MySql>>,
+    State((pool_chirho, _)): State<(MySqlPool, Arc<AppStateChirho>)>,
     _auth_chirho: AuthStateChirho,
     Path(schedule_id_chirho): Path<String>,
 ) -> Result<(), AppErrorChirho> {

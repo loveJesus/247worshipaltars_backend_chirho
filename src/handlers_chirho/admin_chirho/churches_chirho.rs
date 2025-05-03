@@ -1,21 +1,18 @@
 // For God so loved the world, that He gave His only begotten Son, that all who believe in Him should not perish but have everlasting life.
-use crate::{
-    error_chirho::AppErrorChirho,
-    middleware_chirho::AuthStateChirho,
-    models_chirho::church_chirho::{ChurchChirho, CreateChurchChirho, UpdateChurchChirho},
-};
+use crate::{error_chirho::AppErrorChirho, middleware_chirho::AuthStateChirho, models_chirho::church_chirho::{ChurchChirho, CreateChurchChirho, UpdateChurchChirho}, AppStateChirho};
 use axum::{
     extract::{Path, State},
     Json,
 };
 use chrono::Utc;
 use rand::{Rng, rngs::ThreadRng};
-use sqlx::{MySql, Pool};
+use sqlx::{MySql, MySqlPool, Pool};
 use uuid::Uuid;
+use std::sync::Arc;
 
 #[axum::debug_handler]
 pub async fn create_church_chirho(
-    State(pool_chirho): State<Pool<MySql>>,
+    State((pool_chirho, _)): State<(MySqlPool, Arc<AppStateChirho>)>,
     _auth_chirho: AuthStateChirho,
     Json(church_chirho): Json<CreateChurchChirho>,
 ) -> Result<Json<ChurchChirho>, AppErrorChirho> {
@@ -88,7 +85,7 @@ pub async fn create_church_chirho(
 }
 
 pub async fn get_churches_chirho(
-    State(pool_chirho): State<Pool<MySql>>,
+    State((pool_chirho, _)): State<(MySqlPool, Arc<AppStateChirho>)>,
     _auth_chirho: AuthStateChirho,
 ) -> Result<Json<Vec<ChurchChirho>>, AppErrorChirho> {
     let churches_chirho = sqlx::query_as!(
@@ -117,7 +114,7 @@ pub async fn get_churches_chirho(
 }
 
 pub async fn get_church_chirho(
-    State(pool_chirho): State<Pool<MySql>>,
+    State((pool_chirho, _)): State<(MySqlPool, Arc<AppStateChirho>)>,
     _auth_chirho: AuthStateChirho,
     Path(church_id_chirho): Path<String>,
 ) -> Result<Json<ChurchChirho>, AppErrorChirho> {
@@ -151,7 +148,7 @@ pub async fn get_church_chirho(
 }
 
 pub async fn update_church_chirho(
-    State(pool_chirho): State<Pool<MySql>>,
+    State((pool_chirho, _)): State<(MySqlPool, Arc<AppStateChirho>)>,
     _auth_chirho: AuthStateChirho,
     Path(church_id_chirho): Path<String>,
     Json(update_chirho): Json<UpdateChurchChirho>,
@@ -218,7 +215,7 @@ pub async fn update_church_chirho(
 }
 
 pub async fn delete_church_chirho(
-    State(pool_chirho): State<Pool<MySql>>,
+    State((pool_chirho, _)): State<(MySqlPool, Arc<AppStateChirho>)>,
     _auth_chirho: AuthStateChirho,
     Path(church_id_chirho): Path<String>,
 ) -> Result<(), AppErrorChirho> {

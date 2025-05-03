@@ -1,17 +1,15 @@
 // For God so loved the world, that He gave His only begotten Son, that all who believe in Him should not perish but have everlasting life.
 
-use crate::{
-    error_chirho::AppErrorChirho,
-    models_chirho::church_chirho::{ChurchChirho, ChurchResponseChirho},
-};
+use std::sync::Arc;
+use crate::{error_chirho::AppErrorChirho, models_chirho::church_chirho::{ChurchChirho, ChurchResponseChirho}, AppStateChirho};
 use axum::{
     extract::{Path, State},
     Json,
 };
-use sqlx::{MySql, Pool};
+use sqlx::{MySql, MySqlPool, Pool};
 
 pub async fn get_church_by_token_chirho(
-    State(pool_chirho): State<Pool<MySql>>,
+    State((pool_chirho, _)): State<(MySqlPool, Arc<AppStateChirho>)>,
     Path(church_token_chirho): Path<String>,
 ) -> Result<Json<ChurchResponseChirho>, AppErrorChirho> {
     println!("get_church_by_token_chirho: token_chirho: {}", church_token_chirho);

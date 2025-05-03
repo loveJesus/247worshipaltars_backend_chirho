@@ -1,12 +1,17 @@
 // For God so loved the world, that He gave His only begotten Son, that all who believe in Him should not perish but have everlasting life.
 pub use tokio::net::TcpListener;
 use tower_http::cors::{AllowMethods, AllowOrigin};
+use std::io::Write;
 
 // <-- Import TcpListener from Tokio
 
 use axum::{
     routing::{delete, get, post, put},
     Router,
+    extract::ws::{WebSocket, WebSocketUpgrade, Message},
+    response::IntoResponse,
+    extract::Path,
+    extract::State,
 };
 use dotenv::dotenv;
 use std::net::SocketAddr;
@@ -14,6 +19,10 @@ use axum::http::{header, Method};
 use tower_http::cors::{Any, CorsLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use axum::Extension;
+use std::sync::Arc;
+use tokio::sync::broadcast;
+use serde_json::json;
+use sqlx::MySqlPool;
 
 mod config_chirho;
 mod db_chirho;
@@ -59,9 +68,132 @@ use handlers_chirho::{
 };
 use crate::handlers_chirho::public_chirho::{create_signup_chirho, get_schedule_signups_chirho, delete_signup_chirho};
 
+#[derive(Clone)]
+struct AppStateChirho {
+    tx: broadcast::Sender<SignupEventChirho>,
+}
+
+#[derive(Clone, Debug, serde::Serialize)]
+struct SignupEventChirho {
+    church_id_chirho: String,
+    schedule_id_chirho: String,
+    event_type_chirho: String,
+    data_chirho: serde_json::Value,
+}
+
+async fn websocket_handler_chirho(
+    ws_chirho: WebSocketUpgrade,
+    State((pool_chirho, state_chirho)): State<(MySqlPool, Arc<AppStateChirho>)>,
+    Path(church_id_chirho): Path<String>,
+) -> impl IntoResponse {
+    eprintln!("[WebSocket] Handler called for church_id: {}", church_id_chirho.clone());
+    std::io::stderr().flush().unwrap();
+    
+    let response_chirho = ws_chirho.on_upgrade(move |socket_chirho| {
+        eprintln!("[WebSocket] Upgrade successful for church_id: {}", church_id_chirho.clone());
+        std::io::stderr().flush().unwrap();
+        handle_socket_chirho(socket_chirho, state_chirho, church_id_chirho)
+    });
+    
+    //eprintln!("[WebSocket] Returning response for church_id: {}", church_id_chirho.clone());
+    std::io::stderr().flush().unwrap();
+    response_chirho
+}
+
+async fn handle_socket_chirho(
+    mut socket_chirho: WebSocket,
+    state_chirho: Arc<AppStateChirho>,
+    church_id_chirho: String,
+) {
+    eprintln!("[WebSocket] Connection established for church_id: {}", church_id_chirho);
+    std::io::stderr().flush().unwrap();
+    
+    let mut rx_chirho = state_chirho.tx.subscribe();
+    eprintln!("[WebSocket] Subscribed to broadcast channel for church_id: {}", church_id_chirho);
+    std::io::stderr().flush().unwrap();
+    
+    // Send initial message to confirm connection
+    let initial_message_chirho = serde_json::json!({
+        "type_chirho": "connected",
+        "church_id_chirho": church_id_chirho
+    });
+    
+    match socket_chirho.send(Message::Text(initial_message_chirho.to_string().into())).await {
+        Ok(_) => {
+            eprintln!("[WebSocket] Initial message sent successfully to church_id: {}", church_id_chirho);
+            std::io::stderr().flush().unwrap();
+        }
+        Err(e_chirho) => {
+            eprintln!("[WebSocket] Failed to send initial message to church_id {}: {:?}", church_id_chirho, e_chirho);
+            std::io::stderr().flush().unwrap();
+            return;
+        }
+    }
+    
+    loop {
+        tokio::select! {
+            msg = rx_chirho.recv() => {
+                match msg {
+                    Ok(event_chirho) => {
+                        eprintln!("[WebSocket] Received broadcast event for church_id {}: {:?}", church_id_chirho, event_chirho);
+                        std::io::stderr().flush().unwrap();
+                        if event_chirho.church_id_chirho == church_id_chirho {
+                            // Format the event with a consistent structure
+                            let formatted_event_chirho = serde_json::json!({
+                                "type_chirho": event_chirho.event_type_chirho,
+                                "data_chirho": event_chirho.data_chirho
+                            });
+                            
+                            match serde_json::to_string(&formatted_event_chirho) {
+                                Ok(json_chirho) => {
+                                    eprintln!("[WebSocket] Sending event to church_id {}: {}", church_id_chirho, json_chirho);
+                                    std::io::stderr().flush().unwrap();
+                                    if let Err(e_chirho) = socket_chirho.send(Message::Text(json_chirho.into())).await {
+                                        eprintln!("[WebSocket] Failed to send event to church_id {}: {:?}", church_id_chirho, e_chirho);
+                                        std::io::stderr().flush().unwrap();
+                                        break;
+                                    }
+                                }
+                                Err(e_chirho) => {
+                                    eprintln!("[WebSocket] Failed to serialize event for church_id {}: {:?}", church_id_chirho, e_chirho);
+                                    std::io::stderr().flush().unwrap();
+                                }
+                            }
+                        }
+                    }
+                    Err(e_chirho) => {
+                        eprintln!("[WebSocket] Error receiving broadcast message for church_id {}: {:?}", church_id_chirho, e_chirho);
+                        std::io::stderr().flush().unwrap();
+                        break;
+                    }
+                }
+            }
+            result = socket_chirho.recv() => {
+                match result {
+                    Some(Ok(msg_chirho)) => {
+                        eprintln!("[WebSocket] Received message from church_id {}: {:?}", church_id_chirho, msg_chirho);
+                        std::io::stderr().flush().unwrap();
+                    }
+                    Some(Err(e_chirho)) => {
+                        eprintln!("[WebSocket] Error receiving message from church_id {}: {:?}", church_id_chirho, e_chirho);
+                        std::io::stderr().flush().unwrap();
+                        break;
+                    }
+                    None => {
+                        eprintln!("[WebSocket] Client disconnected for church_id: {}", church_id_chirho);
+                        std::io::stderr().flush().unwrap();
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    eprintln!("[WebSocket] Connection closed for church_id: {}", church_id_chirho);
+    std::io::stderr().flush().unwrap();
+}
+
 #[tokio::main]
 async fn main() {
-
     // Initialize tracing
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::new(
@@ -69,6 +201,10 @@ async fn main() {
         ))
         .with(tracing_subscriber::fmt::layer())
         .init();
+
+    // Force immediate output to verify logging is working
+    println!("Server starting...");
+    std::io::stdout().flush().unwrap();
 
     // Load environment variables
     dotenv().ok();
@@ -108,9 +244,12 @@ async fn main() {
             header::CONTENT_TYPE,
         ]);
 
-    // Create router
-    let admin_router_chirho = Router::new()
-        // Admin routes
+    // Create broadcast channel for WebSocket events
+    let (tx_chirho, _) = broadcast::channel(100);
+    let state_chirho = Arc::new(AppStateChirho { tx: tx_chirho });
+
+    // Create router with combined state type
+    let app_chirho = Router::new()
         .route("/api_chirho/admin_chirho/auth_chirho/login_chirho", post(login_chirho))
         .route("/api_chirho/admin_chirho/auth_chirho/logout_chirho", post(logout_chirho))
         .route("/api_chirho/admin_chirho/continents_chirho", get(get_continents_chirho))
@@ -126,29 +265,22 @@ async fn main() {
         .route("/api_chirho/admin_chirho/schedule_chirho", get(get_schedules_chirho))
         .route("/api_chirho/admin_chirho/schedule_chirho/assign_chirho", post(create_schedule_chirho))
         .route("/api_chirho/admin_chirho/schedule_chirho/unassign_chirho/{schedule_id_chirho}", delete(delete_schedule_chirho))
-        // Auth routes
-        .route("/api_chirho/admin_chirho/auth_chirho/logout_chirho", delete(logout_chirho));        
-
-    // Public routes
-    let public_router_chirho = Router::new()
+        .route("/api_chirho/admin_chirho/auth_chirho/logout_chirho", delete(logout_chirho))
         .route("/api_chirho/public_chirho/church_chirho/{church_token_chirho}", get(get_church_by_token_chirho))
         .route("/api_chirho/public_chirho/church_chirho/{church_token_chirho}/assign_to_schedule_chirho/{schedule_id_chirho}", post(create_signup_chirho))
         .route("/api_chirho/public_chirho/church_chirho/{church_token_chirho}/schedule_chirho/{schedule_id_chirho}/signups_chirho", get(get_schedule_signups_chirho))
         .route("/api_chirho/public_chirho/church_chirho/{church_token_chirho}/signup_chirho/{signup_id_chirho}", delete(delete_signup_chirho))
-        .route("/api_chirho/public_chirho/schedules_chirho/upcoming_chirho", get(get_upcoming_schedules_chirho));
-
-
-    // Combine all routers
-    let app_chirho = Router::new()
-        .merge(admin_router_chirho)
-        .merge(public_router_chirho)
+        .route("/api_chirho/public_chirho/schedules_chirho/upcoming_chirho", get(get_upcoming_schedules_chirho))
+        .route("/ws_chirho/{church_id_chirho}", get(websocket_handler_chirho))
         .layer(cors_chirho)
-        .with_state(pool_chirho);
+        .with_state((pool_chirho, state_chirho));
 
     // Start server
     let addr_chirho = SocketAddr::from(([0, 0, 0, 0], 3000));
     let listener_chirho = TcpListener::bind(addr_chirho).await.unwrap();
 
-    println!("Server listening on {}", addr_chirho);
+    println!("HALLELUJAH Server listening on {}", addr_chirho);
+    std::io::stdout().flush().unwrap();
+
     axum::serve(listener_chirho, app_chirho).await.unwrap();
 }

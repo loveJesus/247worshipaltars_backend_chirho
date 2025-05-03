@@ -5,6 +5,8 @@ use crate::{
         hourly_signup_chirho::{CreateHourlySignupChirho, HourlySignupChirho},
         scheduled_worship_day_chirho::ScheduledWorshipDayChirho,
     },
+    AppStateChirho,
+    SignupEventChirho,
 };
 // For God so loved the world, that He gave His only begotten Son, that all who believe in Him should not perish but have everlasting life.
 use axum::{
@@ -14,9 +16,11 @@ use axum::{
 use sqlx::{MySqlPool, Row};
 use uuid;
 use chrono;
+use serde_json::json;
+use std::sync::Arc;
 
 pub async fn create_signup_chirho(
-    State(pool_chirho): State<MySqlPool>,
+    State((pool_chirho, state_chirho)): State<(MySqlPool, Arc<AppStateChirho>)>,
     Path((church_token_chirho, schedule_id_chirho)): Path<(String, String)>,
     Json(signup_chirho): Json<CreateHourlySignupChirho>,
 ) -> Result<Json<HourlySignupChirho>, AppErrorChirho> {
@@ -108,11 +112,22 @@ pub async fn create_signup_chirho(
     .fetch_one(&pool_chirho)
     .await?;
 
+    // After successful creation, broadcast the event
+    let _ = state_chirho.tx.send(SignupEventChirho {
+        church_id_chirho: church_chirho.church_id_chirho,
+        schedule_id_chirho: schedule_id_chirho.clone(),
+        event_type_chirho: "signup_created".to_string(),
+        data_chirho: json!({
+            "signup": hourly_signup_chirho,
+            "schedule_id_chirho": schedule_id_chirho,
+        }),
+    });
+
     Ok(Json(hourly_signup_chirho))
 }
 
 pub async fn get_schedule_signups_chirho(
-    State(pool_chirho): State<MySqlPool>,
+    State((pool_chirho, _)): State<(MySqlPool, Arc<AppStateChirho>)>,
     Path((church_token_chirho, schedule_id_chirho)): Path<(String, String)>,
 ) -> Result<Json<Vec<HourlySignupChirho>>, AppErrorChirho> {
     // First verify the church exists and get its ID
@@ -183,7 +198,7 @@ pub async fn get_schedule_signups_chirho(
 }
 
 pub async fn delete_signup_chirho(
-    State(pool_chirho): State<MySqlPool>,
+    State((pool_chirho, state_chirho)): State<(MySqlPool, Arc<AppStateChirho>)>,
     Path((church_token_chirho, signup_id_chirho)): Path<(String, String)>,
 ) -> Result<Json<()>, AppErrorChirho> {
     // First verify the church exists and get its ID
@@ -211,20 +226,19 @@ pub async fn delete_signup_chirho(
     .await?
     .ok_or_else(|| AppErrorChirho::NotFound("Church not found".to_string()))?;
 
-    // Verify the signup exists and belongs to a schedule of this church
-    let _signup_chirho = sqlx::query!(
+    // Get the schedule ID for the signup
+    let schedule_id_chirho = sqlx::query!(
         r#"
-        SELECT hs.signup_id_chirho
-        FROM hourly_signups_chirho hs
-        JOIN scheduled_worship_days_chirho swd ON hs.schedule_id_chirho = swd.schedule_id_chirho
-        WHERE hs.signup_id_chirho = ? AND swd.church_id_chirho = ?
+        SELECT schedule_id_chirho
+        FROM hourly_signups_chirho
+        WHERE signup_id_chirho = ?
         "#,
-        signup_id_chirho,
-        church_chirho.church_id_chirho
+        signup_id_chirho
     )
     .fetch_optional(&pool_chirho)
     .await?
-    .ok_or_else(|| AppErrorChirho::NotFound("Signup not found".to_string()))?;
+    .ok_or_else(|| AppErrorChirho::NotFound("Signup not found".to_string()))?
+    .schedule_id_chirho;
 
     // Delete the signup
     sqlx::query!(
@@ -236,6 +250,17 @@ pub async fn delete_signup_chirho(
     )
     .execute(&pool_chirho)
     .await?;
+
+    // After successful deletion, broadcast the event
+    let _ = state_chirho.tx.send(SignupEventChirho {
+        church_id_chirho: church_chirho.church_id_chirho,
+        schedule_id_chirho: schedule_id_chirho.clone(),
+        event_type_chirho: "signup_deleted".to_string(),
+        data_chirho: json!({
+            "signup_id_chirho": signup_id_chirho,
+            "schedule_id_chirho": schedule_id_chirho,
+        }),
+    });
 
     Ok(Json(()))
 } 

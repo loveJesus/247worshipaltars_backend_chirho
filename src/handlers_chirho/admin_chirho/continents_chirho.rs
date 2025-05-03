@@ -1,21 +1,18 @@
 // For God so loved the world, that He gave His only begotten Son, that all who believe in Him should not perish but have everlasting life.
 
-use crate::{
-    error_chirho::AppErrorChirho,
-    middleware_chirho::AuthStateChirho,
-    models_chirho::continent_chirho::{ContinentChirho, CreateContinentChirho, UpdateContinentChirho},
-};
+use std::sync::Arc;
+use crate::{error_chirho::AppErrorChirho, middleware_chirho::AuthStateChirho, models_chirho::continent_chirho::{ContinentChirho, CreateContinentChirho, UpdateContinentChirho}, AppStateChirho};
 use axum::{
     extract::{Path, State},
     Json,
 };
 use chrono::Utc;
-use sqlx::{MySql, Pool};
+use sqlx::{MySql, MySqlPool, Pool};
 use uuid::Uuid;
 
 #[axum::debug_handler]
 pub async fn create_continent_chirho(
-    State(pool_chirho): State<Pool<MySql>>,
+    State((pool_chirho, _)): State<(MySqlPool, Arc<AppStateChirho>)>,
     _auth_chirho: AuthStateChirho,
     Json(continent_chirho): Json<CreateContinentChirho>,
 ) -> Result<Json<ContinentChirho>, AppErrorChirho> {
@@ -65,7 +62,7 @@ pub async fn create_continent_chirho(
 }
 
 pub async fn get_continents_chirho(
-    State(pool_chirho): State<Pool<MySql>>,
+    State((pool_chirho, _)): State<(MySqlPool, Arc<AppStateChirho>)>,
     auth_chirho: AuthStateChirho,
 ) -> Result<Json<Vec<ContinentChirho>>, AppErrorChirho> {
     println!("Continents handler: Starting with auth claims: {:?}", auth_chirho.claims_chirho);
@@ -95,11 +92,11 @@ pub async fn get_continents_chirho(
 }
 
 pub async fn get_continent_chirho(
-    State(pool): State<Pool<MySql>>,
+    State((pool_chirho, _)): State<(MySqlPool, Arc<AppStateChirho>)>,
     _auth_chirho: AuthStateChirho,
     Path(continent_id): Path<String>,
 ) -> Result<Json<ContinentChirho>, AppErrorChirho> {
-    let continent = sqlx::query_as!(
+    let continent_chirho = sqlx::query_as!(
         ContinentChirho,
         r#"
         SELECT 
@@ -113,25 +110,25 @@ pub async fn get_continent_chirho(
         "#,
         continent_id
     )
-    .fetch_optional(&pool)
+    .fetch_optional(&pool_chirho)
     .await?;
 
-    match continent {
-        Some(continent) => Ok(Json(continent)),
+    match continent_chirho {
+        Some(continent_inner_chirho) => Ok(Json(continent_inner_chirho)),
         None => Err(AppErrorChirho::NotFound("Continent not found".to_string())),
     }
 }
 
 pub async fn update_continent_chirho(
-    State(pool): State<Pool<MySql>>,
+    State((pool_chirho, _)): State<(MySqlPool, Arc<AppStateChirho>)>,
     _auth_chirho: AuthStateChirho,
-    Path(continent_id): Path<String>,
-    Json(continent): Json<UpdateContinentChirho>,
+    Path(continent_id_chirho): Path<String>,
+    Json(continent_chirho): Json<UpdateContinentChirho>,
 ) -> Result<Json<ContinentChirho>, AppErrorChirho> {
     let now = Utc::now();
 
     // First update the continent
-    let result = sqlx::query!(
+    let result_chirho = sqlx::query!(
         r#"
         UPDATE continents_chirho
         SET 
@@ -140,15 +137,15 @@ pub async fn update_continent_chirho(
             updated_timestamp_chirho = ?
         WHERE continent_id_chirho = ?
         "#,
-        continent.name_chirho,
-        continent.central_timezone_chirho,
+        continent_chirho.name_chirho,
+        continent_chirho.central_timezone_chirho,
         now,
-        continent_id
+        continent_id_chirho
     )
-    .execute(&pool)
+    .execute(&pool_chirho)
     .await?;
 
-    if result.rows_affected() == 0 {
+    if result_chirho.rows_affected() == 0 {
         return Err(AppErrorChirho::NotFound("Continent not found".to_string()));
     }
 
@@ -165,30 +162,30 @@ pub async fn update_continent_chirho(
         FROM continents_chirho
         WHERE continent_id_chirho = ?
         "#,
-        continent_id
+        continent_id_chirho
     )
-    .fetch_one(&pool)
+    .fetch_one(&pool_chirho)
     .await?;
 
     Ok(Json(updated_continent))
 }
 
 pub async fn delete_continent_chirho(
-    State(pool): State<Pool<MySql>>,
+    State((pool_chirho, _)): State<(MySqlPool, Arc<AppStateChirho>)>,
     _auth_chirho: AuthStateChirho,
     Path(continent_id): Path<String>,
 ) -> Result<(), AppErrorChirho> {
-    let result = sqlx::query!(
+    let result_chirho = sqlx::query!(
         r#"
         DELETE FROM continents_chirho
         WHERE continent_id_chirho = ?
         "#,
         continent_id
     )
-    .execute(&pool)
+    .execute(&pool_chirho)
     .await?;
 
-    if result.rows_affected() == 0 {
+    if result_chirho.rows_affected() == 0 {
         return Err(AppErrorChirho::NotFound("Continent not found".to_string()));
     }
 

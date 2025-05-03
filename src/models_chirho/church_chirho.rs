@@ -70,11 +70,14 @@ impl ChurchResponseChirho {
             let church_time_chirho = now_chirho.with_timezone(&chrono_tz::Tz::from_str(&church_chirho.church_timezone_chirho).unwrap());
 
             // Calculate the hour difference
-            let hour_diff_chirho = (church_time_chirho.hour() as i32 - continent_time_chirho.hour() as i32) % 24;
+            let hour_diff_chirho = church_time_chirho.hour() as i32 - continent_time_chirho.hour() as i32;
+
+            println!("Hallelujah, the hour difference is: {}", hour_diff_chirho);
             
             // Adjust the start hour based on the timezone difference
-            (18 + hour_diff_chirho) % 24
+            18 + hour_diff_chirho
         } else {
+            println!("Hallelujah, no continent timezone found, defaulting to 6 PM");
             18 // Default to 6 PM if no continent timezone
         };
 

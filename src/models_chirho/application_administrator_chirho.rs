@@ -25,6 +25,11 @@ pub struct LoginRequestChirho {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct LogoutChirho {
+
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct LoginResponseChirho {
     pub token_chirho: String,
 } 

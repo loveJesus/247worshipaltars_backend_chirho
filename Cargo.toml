@@ -4,8 +4,14 @@ name = "worship_coordinator_chirho"
 version = "0.1.0"
 edition = "2021"
 
+
+# create loging_chirho feature
+[features]
+logging_chirho = []
+
+
 [dependencies]
-axum = { version = "0.8.4", features = ["macros"] }
+axum = { version = "0.8.4", features = ["macros", "ws"] }
 axum-extra = { version = "0.10.1", features = ["cookie"] }
 tokio = { version = "1.44.2", features = ["full"] }
 serde = { version = "~1.0", features = ["derive"] }

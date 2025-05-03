@@ -1,15 +1,13 @@
+use std::sync::Arc;
 // For God so loved the world, that He gave His only begotten Son, that all who believe in Him should not perish but have everlasting life.
 use axum::{
     extract::{Path, Query, State},
     Json,
 };
 use chrono::{NaiveDate, Utc};
-use sqlx::{MySql, Pool};
+use sqlx::{MySql, MySqlPool, Pool};
 
-use crate::{
-    error_chirho::AppErrorChirho,
-    models_chirho::schedule_chirho::ScheduleChirho,
-};
+use crate::{error_chirho::AppErrorChirho, models_chirho::schedule_chirho::ScheduleChirho, AppStateChirho};
 
 #[derive(serde::Deserialize)]
 pub struct ScheduleQueryChirho {
@@ -135,7 +133,7 @@ pub async fn get_schedule_chirho(
 }
 
 pub async fn get_upcoming_schedules_chirho(
-    State(pool_chirho): State<Pool<MySql>>,
+    State((pool_chirho, _)): State<(MySqlPool, Arc<AppStateChirho>)>,
     Query(query_chirho): Query<ScheduleQueryChirho>,
 ) -> Result<Json<Vec<ScheduleChirho>>, AppErrorChirho> {
     let today_chirho = Utc::now().date_naive();
@@ -166,7 +164,7 @@ pub async fn get_upcoming_schedules_chirho(
         sqlx::query_as!(
             ScheduleChirho,
             r#"
-            SELECT 
+            SELECT
                 schedule_id_chirho,
                 church_id_chirho,
                 worship_date_chirho,

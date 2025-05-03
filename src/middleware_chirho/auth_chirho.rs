@@ -30,6 +30,8 @@ where
     type Rejection = AppErrorChirho;
 
     async fn from_request_parts(parts_chirho: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
+
+        #[cfg(feature = "logging_chirho")]
         println!("Auth middleware: Starting token extraction");
         
         // First try to get token from Authorization header
@@ -40,12 +42,14 @@ where
             .and_then(|header_chirho| header_chirho.strip_prefix("Bearer "))
             .map(|token_chirho| token_chirho.to_string());
 
+        #[cfg(feature = "logging_chirho")]
         println!("Auth middleware: Authorization header token: {:?}", token_chirho);
 
         // If no token in header, try cookie
         let token_chirho = if let Some(token_chirho) = token_chirho {
             token_chirho
         } else {
+            #[cfg(feature = "logging_chirho")]
             println!("Auth middleware: No token in header, trying cookie");
             let jar_chirho = parts_chirho.extract::<CookieJar>().await.unwrap();
             jar_chirho
@@ -54,14 +58,20 @@ where
                 .ok_or_else(|| AppErrorChirho::AuthError("Missing auth token".to_string()))?
         };
 
+        #[cfg(feature = "logging_chirho")]
         println!("Auth middleware: Using token: {}", token_chirho);
 
         let config_chirho = crate::config_chirho::ConfigChirho::from_env();
 
-        println!("Auth middleware: Config found, secret length: {}", config_chirho.jwt_chirho.secret_chirho.len());
-        println!("Auth middleware: Creating decoding key...");
+        #[cfg(feature = "logging_chirho")]
+        {
+            println!("Auth middleware: Config found, secret length: {}", config_chirho.jwt_chirho.secret_chirho.len());
+            println!("Auth middleware: Creating decoding key...");
+        }
 
         let decoding_key_chirho = DecodingKey::from_secret(config_chirho.jwt_chirho.secret_chirho.as_bytes());
+
+        #[cfg(feature = "logging_chirho")]
         println!("Auth middleware: Decoding key created, attempting to decode token...");
 
         let mut validation_chirho = Validation::default();
@@ -74,14 +84,21 @@ where
             &validation_chirho,
         )
         .map_err(|e| {
-            println!("Auth middleware: Token decode error: {:?}", e);
-            println!("Auth middleware: Error kind: {:?}", e.kind());
+
+            #[cfg(feature = "logging_chirho")]
+            {
+                println!("Auth middleware: Token decode error: {:?}", e);
+                println!("Auth middleware: Error kind: {:?}", e.kind());
+            }
+
             AppErrorChirho::AuthError(format!("Invalid token: {:?}", e))
         })?;
 
-        println!("Auth middleware: Token decoded successfully");
-        println!("Auth middleware: Claims: {:?}", token_data_chirho.claims);
-
+        #[cfg(feature = "logging_chirho")]
+        {
+            println!("Auth middleware: Token decoded successfully");
+            println!("Auth middleware: Claims: {:?}", token_data_chirho.claims);
+        }
         Ok(AuthStateChirho {
             claims_chirho: token_data_chirho.claims,
         })
