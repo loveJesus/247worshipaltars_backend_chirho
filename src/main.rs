@@ -13,6 +13,7 @@ use std::net::SocketAddr;
 use axum::http::{header, Method};
 use tower_http::cors::{Any, CorsLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use axum::Extension;
 
 mod config_chirho;
 mod db_chirho;
@@ -52,8 +53,9 @@ use handlers_chirho::{
         },
     },
     public_chirho::{
-        create_signup_chirho,
+        //create_signup_chirho,
         get_public_schedules_chirho,
+        get_church_by_token_chirho,
     },
 };
 
@@ -81,25 +83,34 @@ async fn main() {
     let cors_chirho = CorsLayer::new()
         .allow_origin(AllowOrigin::list(vec![
             "http://localhost:5173".parse().unwrap(),
-            "http://example.com".parse().unwrap(),
+            "http://127.0.0.1:5173".parse().unwrap(),
         ]))
         .allow_methods(AllowMethods::list(vec![
             Method::GET,
             Method::POST,
             Method::PUT,
             Method::DELETE,
+            Method::OPTIONS,
         ]))
         .allow_headers(vec![
             header::CONTENT_TYPE,
             header::AUTHORIZATION,
             header::ACCEPT,
+            header::ORIGIN,
+            header::ACCESS_CONTROL_REQUEST_METHOD,
+            header::ACCESS_CONTROL_REQUEST_HEADERS,
         ])
-        .allow_credentials(true);
+        .allow_credentials(true)
+        .expose_headers(vec![
+            header::AUTHORIZATION,
+            header::CONTENT_TYPE,
+        ]);
 
     // Create router
-    let app_chirho = Router::new()
+    let admin_router_chirho = Router::new()
         // Admin routes
         .route("/api_chirho/admin_chirho/auth_chirho/login_chirho", post(login_chirho))
+        .route("/api_chirho/admin_chirho/auth_chirho/logout_chirho", post(logout_chirho))
         .route("/api_chirho/admin_chirho/continents_chirho", get(get_continents_chirho))
         .route("/api_chirho/admin_chirho/continents_chirho/:id", get(get_continent_chirho))
         .route("/api_chirho/admin_chirho/continents_chirho", post(create_continent_chirho))
@@ -115,18 +126,24 @@ async fn main() {
         .route("/api_chirho/admin_chirho/schedule_chirho/unassign_chirho", delete(delete_schedule_chirho))
         // Auth routes
         .route("/api_chirho/admin_chirho/auth_chirho/logout_chirho", delete(logout_chirho))
-        // Public routes
-        .route("/api_chirho/public_chirho/church_chirho/:token_chirho/schedule_chirho/:date_chirho", get(get_public_schedules_chirho))
-        .route("/api_chirho/public_chirho/church_chirho/:token_chirho/signup_chirho", post(create_signup_chirho))
         .layer(cors_chirho)
-        .with_state(pool_chirho);
+        .layer(Extension(pool_chirho));
+
+    // Public routes
+    // let public_router_chirho = Router::new()
+    //     .route("/api_chirho/public_chirho/church_chirho/:token_chirho", get(get_church_by_token_chirho))
+    //     .layer(cors_chirho);
+
+    // Combine all routers
+    // let app_chirho = Router::new()
+    //     .merge(admin_router_chirho)
+    //     .merge(public_router_chirho)
+    //     .layer(Extension(pool_chirho));
 
     // Start server
     let addr_chirho = SocketAddr::from(([0, 0, 0, 0], 3000));
     let listener_chirho = TcpListener::bind(addr_chirho).await.unwrap();
 
     println!("Server listening on {}", addr_chirho);
-    axum::serve(listener_chirho, app_chirho.into_make_service())
-        .await
-        .unwrap();
+    axum::serve(listener_chirho, admin_router_chirho).await.unwrap();
 }

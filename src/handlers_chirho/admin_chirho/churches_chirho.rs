@@ -9,7 +9,7 @@ use axum::{
     Json,
 };
 use chrono::Utc;
-use rand::{Rng, rngs::OsRng};
+use rand::{Rng, rngs::ThreadRng};
 use sqlx::{MySql, Pool};
 use uuid::Uuid;
 
@@ -24,7 +24,7 @@ pub async fn create_church_chirho(
     
     // Generate a random access token using OsRng
     let token_chirho: String = (0..32)
-        .map(|_| OsRng.sample(rand::distributions::Alphanumeric) as char)
+        .map(|_| rand::rng().sample(rand::distr::Alphanumeric) as char)
         .collect();
 
     // First insert the church
@@ -35,18 +35,22 @@ pub async fn create_church_chirho(
             name_chirho,
             continent_id_chirho,
             church_timezone_chirho,
+            leader_name_chirho,
+            leader_email_chirho,
             admin_details_note_chirho,
             internal_notes_chirho,
             member_access_token_chirho,
             created_timestamp_chirho,
             updated_timestamp_chirho
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         "#,
         church_id_chirho,
         church_chirho.name_chirho,
         church_chirho.continent_id_chirho,
         church_chirho.church_timezone_chirho,
+        church_chirho.leader_name_chirho,
+        church_chirho.leader_email_chirho,
         church_chirho.admin_details_note_chirho,
         church_chirho.internal_notes_chirho,
         token_chirho,
@@ -65,6 +69,8 @@ pub async fn create_church_chirho(
             name_chirho,
             continent_id_chirho,
             church_timezone_chirho,
+            leader_name_chirho,
+            leader_email_chirho,
             admin_details_note_chirho,
             internal_notes_chirho,
             member_access_token_chirho,
@@ -93,6 +99,8 @@ pub async fn get_churches_chirho(
             name_chirho,
             continent_id_chirho,
             church_timezone_chirho,
+            leader_name_chirho,
+            leader_email_chirho,
             admin_details_note_chirho,
             internal_notes_chirho,
             member_access_token_chirho,
@@ -121,6 +129,8 @@ pub async fn get_church_chirho(
             name_chirho,
             continent_id_chirho,
             church_timezone_chirho,
+            leader_name_chirho,
+            leader_email_chirho,
             admin_details_note_chirho,
             internal_notes_chirho,
             member_access_token_chirho,
@@ -156,6 +166,8 @@ pub async fn update_church_chirho(
             name_chirho = ?,
             continent_id_chirho = ?,
             church_timezone_chirho = ?,
+            leader_name_chirho = ?,
+            leader_email_chirho = ?,
             admin_details_note_chirho = ?,
             internal_notes_chirho = ?,
             updated_timestamp_chirho = ?
@@ -164,6 +176,8 @@ pub async fn update_church_chirho(
         update_chirho.name_chirho,
         update_chirho.continent_id_chirho,
         update_chirho.church_timezone_chirho,
+        update_chirho.leader_name_chirho,
+        update_chirho.leader_email_chirho,
         update_chirho.admin_details_note_chirho,
         update_chirho.internal_notes_chirho,
         now_chirho,
@@ -185,6 +199,8 @@ pub async fn update_church_chirho(
             name_chirho,
             continent_id_chirho,
             church_timezone_chirho,
+            leader_name_chirho,
+            leader_email_chirho,
             admin_details_note_chirho,
             internal_notes_chirho,
             member_access_token_chirho,

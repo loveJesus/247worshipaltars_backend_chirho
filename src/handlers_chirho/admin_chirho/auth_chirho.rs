@@ -17,9 +17,9 @@ use sqlx::{MySql, Pool};
 
 pub async fn login_chirho(
     State(pool_chirho): State<Pool<MySql>>,
-    State(config_chirho): State<ConfigChirho>,
     Json(login_chirho): Json<AdminLoginRequestChirho>,
 ) -> Result<Json<AdminLoginResponseChirho>, AppErrorChirho> {
+    let config_chirho = ConfigChirho::from_env();
     let admin_chirho = sqlx::query_as!(
         crate::models_chirho::application_administrator_chirho::ApplicationAdministratorChirho,
         r#"
