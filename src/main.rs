@@ -17,11 +17,13 @@ use axum::{
 };
 use dotenv::dotenv;
 use std::net::SocketAddr;
+use std::path::PathBuf;
 use axum::http::{header, Method};
 use tower_http::cors::{Any, CorsLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use axum::Extension;
 use std::sync::Arc;
+use axum_server::tls_rustls::RustlsConfig;
 use tokio::sync::broadcast;
 use serde_json::json;
 use sqlx::MySqlPool;
@@ -285,12 +287,28 @@ async fn main() {
         .layer(cors_chirho)
         .with_state((pool_chirho, state_chirho));
 
+    rustls::crypto::aws_lc_rs::default_provider()
+        .install_default();
+
+    let config_chirho = RustlsConfig::from_pem_file(
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("self_signed_certs_chirho")
+            .join("server_chirho.crt"),
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("self_signed_certs_chirho")
+            .join("server_chirho.key"),
+    )
+        .await
+        .unwrap();
     // Start server
     let addr_chirho = SocketAddr::from(([0, 0, 0, 0], 3000));
-    let listener_chirho = TcpListener::bind(addr_chirho).await.unwrap();
+    //let listener_chirho = TcpListener::bind(addr_chirho).await.unwrap();
 
     println!("HALLELUJAH Server listening on {}", addr_chirho);
     std::io::stdout().flush().unwrap();
-
-    axum::serve(listener_chirho, app_chirho).await.unwrap();
+    axum_server::bind_rustls(addr_chirho, config_chirho)
+        .serve(app_chirho.into_make_service())
+        .await
+        .unwrap();
+    //axum::serve(listener_chirho, app_chirho).await.unwrap();
 }
