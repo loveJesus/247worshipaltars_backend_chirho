@@ -12,6 +12,7 @@ logging_chirho = []
 
 [dependencies]
 axum = { version = "0.8.4", features = ["macros", "ws"] }
+axum-embed = { version = "0.1.0" }
 axum-extra = { version = "0.10.1", features = ["cookie"] }
 tokio = { version = "1.44.2", features = ["full"] }
 serde = { version = "~1.0", features = ["derive"] }
@@ -28,6 +29,8 @@ bcrypt = "~0.17"
 jsonwebtoken = "~9.3"
 
 rand = "~0.9"
+rust-embed  = { version = "~8.7.0"}
+
 # async-trait = "~0.1"
 thiserror = "~2.0"
 

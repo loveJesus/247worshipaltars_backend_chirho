@@ -4,6 +4,8 @@ use tower_http::cors::{AllowMethods, AllowOrigin};
 use std::io::Write;
 
 // <-- Import TcpListener from Tokio
+use rust_embed::RustEmbed;
+use axum_embed::ServeEmbed;
 
 use axum::{
     routing::{delete, get, post, put},
@@ -192,6 +194,10 @@ async fn handle_socket_chirho(
     std::io::stderr().flush().unwrap();
 }
 
+#[derive(RustEmbed, Clone)]
+#[folder = "assets_chirho/"]
+struct AssetsChirho;
+
 #[tokio::main]
 async fn main() {
     // Initialize tracing
@@ -248,6 +254,9 @@ async fn main() {
     let (tx_chirho, _) = broadcast::channel(100);
     let state_chirho = Arc::new(AppStateChirho { tx: tx_chirho });
 
+    let serve_assets_chirho = ServeEmbed::<AssetsChirho>::new();
+
+
     // Create router with combined state type
     let app_chirho = Router::new()
         .route("/api_chirho/admin_chirho/auth_chirho/login_chirho", post(login_chirho))
@@ -272,6 +281,7 @@ async fn main() {
         .route("/api_chirho/public_chirho/church_chirho/{church_token_chirho}/signup_chirho/{signup_id_chirho}", delete(delete_signup_chirho))
         .route("/api_chirho/public_chirho/schedules_chirho/upcoming_chirho", get(get_upcoming_schedules_chirho))
         .route("/ws_chirho/{church_id_chirho}", get(websocket_handler_chirho))
+        .fallback_service(serve_assets_chirho)
         .layer(cors_chirho)
         .with_state((pool_chirho, state_chirho));
 
