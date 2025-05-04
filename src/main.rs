@@ -5,7 +5,7 @@ use std::io::Write;
 
 // <-- Import TcpListener from Tokio
 use rust_embed::RustEmbed;
-use axum_embed::ServeEmbed;
+use axum_embed::{FallbackBehavior, ServeEmbed};
 
 use axum::{
     routing::{delete, get, post, put},
@@ -256,7 +256,11 @@ async fn main() {
     let (tx_chirho, _) = broadcast::channel(100);
     let state_chirho = Arc::new(AppStateChirho { tx: tx_chirho });
 
-    let serve_assets_chirho = ServeEmbed::<AssetsChirho>::new();
+    let serve_assets_chirho = ServeEmbed::<AssetsChirho>::with_parameters(
+        Some("/index.html".to_owned()),
+        FallbackBehavior::NotFound,
+        Some("index.html".to_owned()),
+    );
 
 
     // Create router with combined state type
@@ -301,7 +305,10 @@ async fn main() {
         .await
         .unwrap();
     // Start server
-    let addr_chirho = SocketAddr::from(([0, 0, 0, 0], 3000));
+    let axum_string_port_chirho = std::env::var("AXUM_PORT_CHIRHO")
+        .unwrap_or_else(|_| "3000".into());
+
+    let addr_chirho = SocketAddr::from(([0, 0, 0, 0], axum_string_port_chirho.parse::<u16>().unwrap()));
     //let listener_chirho = TcpListener::bind(addr_chirho).await.unwrap();
 
     println!("HALLELUJAH Server listening on {}", addr_chirho);
