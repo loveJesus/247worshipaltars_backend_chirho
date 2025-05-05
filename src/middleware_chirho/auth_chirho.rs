@@ -55,7 +55,7 @@ where
             jar_chirho
                 .get("auth_token_chirho")
                 .map(|cookie_chirho| cookie_chirho.value().to_string())
-                .ok_or_else(|| AppErrorChirho::AuthError("Missing auth token".to_string()))?
+                .ok_or_else(|| AppErrorChirho::Authentication("Missing auth token".to_string()))?
         };
 
         #[cfg(feature = "logging_chirho")]
@@ -91,7 +91,7 @@ where
                 println!("Auth middleware: Error kind: {:?}", e.kind());
             }
 
-            AppErrorChirho::AuthError(format!("Invalid token: {:?}", e))
+            AppErrorChirho::Authentication(format!("Invalid token: {:?}", e))
         })?;
 
         #[cfg(feature = "logging_chirho")]

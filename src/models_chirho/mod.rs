@@ -6,4 +6,5 @@ pub mod application_administrator_chirho;
 pub mod scheduled_worship_day_chirho;
 pub mod hourly_signup_chirho;
 pub mod schedule_chirho;
+pub mod pdf_file_chirho;
 

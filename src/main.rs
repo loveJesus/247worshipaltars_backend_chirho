@@ -1,4 +1,5 @@
 // For God so loved the world, that He gave His only begotten Son, that all who believe in Him should not perish but have everlasting life.
+#![allow(unused_imports)]
 pub use tokio::net::TcpListener;
 use tower_http::cors::{AllowMethods, AllowOrigin};
 use std::io::Write;
@@ -62,12 +63,18 @@ use handlers_chirho::{
             delete_schedule_chirho,
             get_schedules_chirho,
         },
+        pdf_file_chirho::{
+            upload_pdf_file_chirho,
+            get_all_pdf_files_chirho,
+            delete_pdf_file_chirho,
+        },
     },
     public_chirho::{
         //create_signup_chirho,
         get_public_schedules_chirho,
         get_upcoming_schedules_chirho,
         get_church_by_token_chirho,
+        serve_pdf_file_chirho,
     },
 };
 use crate::handlers_chirho::public_chirho::{create_signup_chirho, get_schedule_signups_chirho, delete_signup_chirho};
@@ -281,11 +288,15 @@ async fn main() {
         .route("/api_chirho/admin_chirho/schedule_chirho/assign_chirho", post(create_schedule_chirho))
         .route("/api_chirho/admin_chirho/schedule_chirho/unassign_chirho/{schedule_id_chirho}", delete(delete_schedule_chirho))
         .route("/api_chirho/admin_chirho/auth_chirho/logout_chirho", delete(logout_chirho))
+        .route("/api_chirho/admin_chirho/pdf_files_chirho", post(upload_pdf_file_chirho))
+        .route("/api_chirho/admin_chirho/pdf_files_chirho", get(get_all_pdf_files_chirho))
+        .route("/api_chirho/admin_chirho/pdf_files_chirho/{pdf_file_id_chirho}", delete(delete_pdf_file_chirho))
         .route("/api_chirho/public_chirho/church_chirho/{church_token_chirho}", get(get_church_by_token_chirho))
         .route("/api_chirho/public_chirho/church_chirho/{church_token_chirho}/assign_to_schedule_chirho/{schedule_id_chirho}", post(create_signup_chirho))
         .route("/api_chirho/public_chirho/church_chirho/{church_token_chirho}/schedule_chirho/{schedule_id_chirho}/signups_chirho", get(get_schedule_signups_chirho))
         .route("/api_chirho/public_chirho/church_chirho/{church_token_chirho}/signup_chirho/{signup_id_chirho}", delete(delete_signup_chirho))
         .route("/api_chirho/public_chirho/schedules_chirho/upcoming_chirho", get(get_upcoming_schedules_chirho))
+        .route("/api_chirho/public_chirho/pdf_files_chirho/{pdf_file_id_chirho}", get(serve_pdf_file_chirho))
         .route("/ws_chirho/{church_id_chirho}", get(websocket_handler_chirho))
         .fallback_service(serve_assets_chirho)
         .layer(cors_chirho)

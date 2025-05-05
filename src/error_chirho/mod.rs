@@ -16,37 +16,36 @@ pub enum AppErrorChirho {
     Validation(String),
     #[error("Authentication error: {0}")]
     Authentication(String),
-    #[error("Not found: {0}")]
-    NotFound(String),
+    #[error("JWT error: {0}")]
+    JwtError(#[from] jsonwebtoken::errors::Error),
     #[error("Bcrypt error: {0}")]
     Bcrypt(#[from] BcryptError),
     #[error("Internal error: {0}")]
     InternalError(String),
-    #[error("Auth error: {0}")]
-    AuthError(String),
+    #[error("Not found: {0}")]
+    NotFound(String),
+    #[error("Forbidden: {0}")]
+    Forbidden(String),
+    #[error("Bad request: {0}")]
+    BadRequest(String),
 }
 
 impl IntoResponse for AppErrorChirho {
     fn into_response(self) -> Response {
-        let status = match self {
-            AppErrorChirho::Database(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            AppErrorChirho::Validation(_) => StatusCode::BAD_REQUEST,
-            AppErrorChirho::Authentication(_) => StatusCode::UNAUTHORIZED,
-            AppErrorChirho::NotFound(_) => StatusCode::NOT_FOUND,
-            AppErrorChirho::Bcrypt(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            AppErrorChirho::InternalError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            AppErrorChirho::AuthError(_) => StatusCode::UNAUTHORIZED,
+        let (status, error_message) = match self {
+            AppErrorChirho::Database(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Database error"),
+            AppErrorChirho::Validation(_) => (StatusCode::BAD_REQUEST, "Validation error"),
+            AppErrorChirho::Authentication(_) => (StatusCode::UNAUTHORIZED, "Authentication error"),
+            AppErrorChirho::JwtError(_) => (StatusCode::UNAUTHORIZED, "JWT error"),
+            AppErrorChirho::Bcrypt(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Bcrypt error"),
+            AppErrorChirho::InternalError(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Internal error"),
+            AppErrorChirho::NotFound(_) => (StatusCode::NOT_FOUND, "Not found"),
+            AppErrorChirho::Forbidden(_) => (StatusCode::FORBIDDEN, "Forbidden"),
+            AppErrorChirho::BadRequest(_) => (StatusCode::BAD_REQUEST, "Bad request"),
         };
 
-        #[derive(Serialize)]
-        struct ErrorResponse {
-            error: String,
-        }
+        let body = format!("{}: {}", error_message, self.to_string());
 
-        let body = ErrorResponse {
-            error: self.to_string(),
-        };
-
-        (status, axum::Json(body)).into_response()
+        (status, body).into_response()
     }
 } 
