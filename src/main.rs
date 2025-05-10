@@ -322,7 +322,7 @@ async fn main() {
     let axum_string_port_chirho = std::env::var("AXUM_PORT_CHIRHO")
         .unwrap_or_else(|_| "3000".into());
 
-    let addr_chirho = SocketAddr::from(([0, 0, 0, 0], axum_string_port_chirho.parse::<u16>().unwrap()));
+    let addr_chirho = SocketAddr::from(([127, 0, 0, 1], axum_string_port_chirho.parse::<u16>().unwrap()));
     //let listener_chirho = TcpListener::bind(addr_chirho).await.unwrap();
 
     #[cfg(target_os = "openbsd")]
