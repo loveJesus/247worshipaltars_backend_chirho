@@ -1,0 +1,3 @@
+[submodule "frontend_chirho"]
+	path = frontend_chirho
+	url = ./frontend_chirho
