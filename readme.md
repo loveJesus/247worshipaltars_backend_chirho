@@ -2,3 +2,6 @@
 
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout self_signed_certs_chirho/server_chirho.key -out self_signed_certs_chirho/server_chirho.crt -subj "/C=US/ST=Florida/L=Olga/O=JesusChristIsLord/CN=247worship-coordinator.loveJes.us" -addext "keyUsage=digitalSignature,keyEncipherment" -addext "extendedKeyUsage=serverAuth,clientAuth"
 sudo setcap CAP_NET_BIND_SERVICE=+eip target/debug/worship_coordinator_chirho
+
+add
+export LIBCLANG_PATH=/usr/local/llvm19/lib in openbsd

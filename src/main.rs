@@ -332,9 +332,13 @@ async fn main() {
 
     println!("HALLELUJAH Server listening on {}", addr_chirho);
     std::io::stdout().flush().unwrap();
-    axum_server::bind_rustls(addr_chirho, config_chirho)
+    if false {
+      axum_server::bind_rustls(addr_chirho, config_chirho)
         .serve(app_chirho.into_make_service())
         .await
         .unwrap();
-    //axum::serve(listener_chirho, app_chirho).await.unwrap();
+    } else {
+      let listener_chirho = TcpListener::bind(addr_chirho).await.unwrap();
+      axum::serve(listener_chirho, app_chirho).await.unwrap();
+    }
 }
