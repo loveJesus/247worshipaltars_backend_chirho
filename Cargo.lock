@@ -1497,6 +1497,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "42f5e15c9953c5e4ccceeb2e7382a716482c34515315f7b03532b8b4e8393d2d"
 
 [[package]]
+name = "openbsd"
+version = "0.1.2"
+source = "git+https://github.com/joshua-cooper/openbsd-rs?branch=master#90d7af48b85b9ceb26464658e584feb232558c5e"
+
+[[package]]
 name = "overload"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3181,6 +3186,7 @@ dependencies = [
  "chrono-tz",
  "dotenv",
  "jsonwebtoken",
+ "openbsd",
  "rand 0.9.1",
  "rust-embed",
  "rustls",

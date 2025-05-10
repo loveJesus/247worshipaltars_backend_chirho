@@ -4,6 +4,9 @@ pub use tokio::net::TcpListener;
 use tower_http::cors::{AllowMethods, AllowOrigin};
 use std::io::Write;
 
+#[cfg(target_os = "openbsd")]
+use openbsd::unveil;
+
 // <-- Import TcpListener from Tokio
 use rust_embed::RustEmbed;
 use axum_embed::{FallbackBehavior, ServeEmbed};
@@ -321,6 +324,11 @@ async fn main() {
 
     let addr_chirho = SocketAddr::from(([0, 0, 0, 0], axum_string_port_chirho.parse::<u16>().unwrap()));
     //let listener_chirho = TcpListener::bind(addr_chirho).await.unwrap();
+
+    #[cfg(target_os = "openbsd")]
+    {
+        println!("JESUS CHRIST IS LORD");
+    }
 
     println!("HALLELUJAH Server listening on {}", addr_chirho);
     std::io::stdout().flush().unwrap();

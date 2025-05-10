@@ -4,11 +4,9 @@ name = "worship_coordinator_chirho"
 version = "0.1.0"
 edition = "2021"
 
-
-# create loging_chirho feature
+# create logging_chirho feature
 [features]
 logging_chirho = []
-
 
 [dependencies]
 axum = { version = "0.8.4", features = ["macros", "ws", "multipart"] }
@@ -37,3 +35,8 @@ thiserror = "~2.0"
 
 dotenv = "~0.15"
 rustls = "0.23.26"
+
+
+[target.'cfg(target_os = "openbsd")'.dependencies]
+openbsd = { git = "https://github.com/joshua-cooper/openbsd-rs", branch = "master"}
+
